@@ -1,0 +1,112 @@
+import ReactPhoneInput from 'react-phone-number-input'
+import React, {useState} from 'react'
+import 'react-phone-number-input/style.css'
+import { isPossiblePhoneNumber } from 'react-phone-number-input'
+import PageBanner from '@/components/Common/PageBanner';
+import GoogleAdsense from '@/components/Common/GoogleAdsense'
+import Head from "next/head";
+import { NextSeo } from "next-seo";
+import { useRouter } from 'next/router';
+import PhoneInput from '@/components/Common/PhoneInput';
+import axios from 'axios'
+
+const CaptivaPortalDasEinstein = () => {
+
+    const router = useRouter()
+
+    const sendAuthorization = async () => {    
+        //console.log(router.query.tok)
+        // window.location.href=router.query.authaction + "&tok=" + router.query.tok + "&redir=" + router.query.redir;
+        //console.log('router.query.authaction ', router.query.authaction)
+        //console.log('value ', value)
+        //const response = await axios.post(
+        //    router.query.authaction,
+        //    {'msisdn': value }
+        //    )
+        //  console.log(response.data)
+        window.location.href=router.query.authaction+"?msisdn="+encodeURIComponent(value);
+      
+    }
+
+    const [value, setValue] = useState()
+
+    return (
+        <>
+        <Head>
+            <title>
+            Captive Portal | Ariadne
+            </title>
+            <meta name='description' content='Ariadne' />
+            <link rel='icon' href='/favicon.png' />
+        </Head>
+        <NextSeo canonical='https://www.ariadne.inc/captiveportaldaseinstein' />
+
+        <PageBanner pageTitle="Free WiFi Das Einstein" />
+
+        <div className="ptb-80 align-content-center">
+        <ReactPhoneInput
+        defaultCountry="DE"
+        className="phoneInput"
+        placeholder="Handynummer"
+        value={value}
+        onChange={setValue}/>
+        {/* {value&& isPossiblePhoneNumber(value) ? "it is" : "no it is not" } */}
+        </div>
+
+        <div className='ad'>
+        <ins className='adsbygoogle'
+          style={{ display: 'block' }}
+          data-ad-client='ca-pub-9225882475496989'
+          data-ad-slot='6600412537'
+          data-ad-format='auto'
+          data-full-width-responsive="true"></ins>
+        </div>
+            <button onClick={sendAuthorization} className="btn btn-primary">Authorize</button>
+
+        <div className="services-area-two pt-80 pb-50 bg-f9f6f6">
+            <div className="container">
+                <GoogleAdsense />
+            </div>
+        </div>
+
+        </>
+    );
+ 
+}
+
+export default CaptivaPortalDasEinstein
+
+
+
+const otpGenerator = require("otp-generator");
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({
+      message: "Method not allowed",
+    });
+  }
+  const { phone_number } = req.body;
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  const client = require("twilio")(accountSid, authToken);
+
+  const generated_code = otpGenerator.generate(5, {
+    digits: true,
+    lowerCaseAlphabets: false,
+    specialChars: false,
+    upperCaseAlphabets: false,
+  });
+  try {
+    const msg = await client.messages.create({
+      from: "whatsapp:+14155238886",
+      body: `Your Verification Code is : ${generated_code}`,
+      to: `whatsapp:${phone_number}`,
+    });
+
+    return res
+      .status(200)
+      .json({ code: generated_code, message_id: msg.accountSid });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+}
